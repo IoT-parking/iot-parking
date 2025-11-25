@@ -1,0 +1,9 @@
+[submodule "backend"]
+	path = backend
+	url = https://github.com/NETProjektStudia/backend
+[submodule "frontend"]
+	path = frontend
+	url = https://github.com/NETProjektStudia/frontend
+[submodule "sensors"]
+	path = sensors
+	url = https://github.com/NETProjektStudia/sensors
