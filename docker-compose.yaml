@@ -10,6 +10,14 @@ services:
       - ./mosquitto/config:/mosquitto/config
       - ./mosquitto/data:/mosquitto/data
       - ./mosquitto/log:/mosquitto/log
+    networks:
+      - iot-parking-network
+    healthcheck:
+      test: ["CMD-SHELL", "mosquitto_sub -t '$$SYS/#' -C 1 -W 1 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
 
   mongodb:
     image: mongo:6.0
@@ -23,3 +31,58 @@ services:
     volumes:
       - ./mongo/data:/data/db
       - ./mongo/config:/data/configdb
+    networks:
+      - iot-parking-network
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: iot-parking-backend
+    restart: unless-stopped
+    environment:
+      # ASP.NET Core configuration
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:8080
+      
+      # MongoDB configuration
+      MongoDbSettings__ConnectionString: mongodb://admin:password@mongodb:27017
+      MongoDbSettings__DatabaseName: iot_parking
+      MongoDbSettings__SensorReadingsCollectionName: sensor_readings
+      
+      # MQTT configuration
+      MqttSettings__BrokerHost: mosquitto
+      MqttSettings__BrokerPort: 1883
+      MqttSettings__ClientId: iot-parking-backend
+      MqttSettings__Topic: parking/sensor/#
+      MqttSettings__UseTls: false
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      mosquitto:
+        condition: service_healthy
+    networks:
+      - iot-parking-network
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: iot-parking-frontend
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    networks:
+      - iot-parking-network
+
+networks:
+  iot-parking-network:
+    driver: bridge
