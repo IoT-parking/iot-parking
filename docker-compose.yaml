@@ -62,11 +62,16 @@ services:
       MqttSettings__ClientId: iot-parking-backend
       MqttSettings__Topic: parking/sensor/#
       MqttSettings__UseTls: false
+
+      Blockchain__RpcUrl: http://blockchain:8545
+      
     depends_on:
       mongodb:
         condition: service_healthy
       mosquitto:
         condition: service_healthy
+      blockchain:
+        condition: service_started
     networks:
       - iot-parking-network
 
@@ -95,15 +100,12 @@ services:
       - MQTT_BROKER_PORT=1883
     tty: true        
     stdin_open: true
-
     networks:
       - iot-parking-network
 
   blockchain:
-    image: ghcr.io/foundry-rs/foundry:latest
-    container_name: anvil-node
-    entrypoint: anvil
-    command: --host 0.0.0.0 --chain-id 31337 --block-time 1
+    build: ./blockchain
+    container_name: iot-parking-blockchain
     ports:
       - "8545:8545"
     networks:
@@ -112,5 +114,3 @@ services:
 networks:
   iot-parking-network:
     driver: bridge
-    
-  
