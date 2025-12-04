@@ -19,13 +19,4 @@ forge script script/Deploy.s.sol:DeployScript --rpc-url http://127.0.0.1:8545 --
 
 echo "Contract deployed successfully."
 
-# Utrzymaj kontener przy życiu
 wait
-```
-
-### 2. Przebuduj kontenery
-
-Ponieważ zmieniliśmy skrypt startowy, musisz przebudować obraz blockchaina:
-
-```bash
-docker-compose up --build
